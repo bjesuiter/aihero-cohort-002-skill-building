@@ -32,13 +32,11 @@ export const POST = async (req: Request): Promise<Response> => {
 
   const stream = createUIMessageStream({
     execute: async ({ writer }) => {
-      // TODO: call the searchEmails function with the
       // conversation history to get the search results
       const historyString = formatMessageHistory(messages);
       const searchResults = await searchEmails(historyString);
 
-      // TODO: take the top X search results
-      const topSearchResults = searchResults.slice(0, 10).filter(
+      const topSearchResults = searchResults.slice(0, 5).filter(
         (searchResult) => searchResult.score > 0,
       );
 
