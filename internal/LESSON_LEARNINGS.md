@@ -10,7 +10,7 @@
 
 - Provider packages: `@ai-sdk/openai`, `@ai-sdk/google`, `@ai-sdk/anthropic`
 - Env vars: `OPENAI_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `ANTHROPIC_API_KEY`
-- Model instantiation: `openai('gpt-4o-mini')`, `google('gemini-2.0-flash')`, `anthropic('claude-3-5-sonnet')`
+- Model instantiation: `openai('gpt-4o-mini')`, `google('gemini-2.5-flash')`, `anthropic('claude-3-5-sonnet')`
 
 ### 01.03 - Generating Text
 

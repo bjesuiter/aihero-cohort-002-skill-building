@@ -6,11 +6,11 @@ import { createUIMessageFixture } from '#shared/create-ui-message-fixture.ts';
 import { wrapAISDKModel } from 'evalite/ai-sdk';
 
 // TODO: Add more models to compare different LLM performance
-// Try: 'gemini-2.0-flash', 'gemini-2.0-flash-lite', GPT-4o, Claude, etc.
+// Try: 'gemini-2.5-flash-lite', GPT-4o, Claude, etc.
 evalite.each([
   {
-    name: 'Gemini 2.0 Flash',
-    input: google('gemini-2.0-flash'),
+    name: 'Gemini 2.5 Flash Lite',
+    input: google('gemini-2.5-flash-lite'),
   },
 ])('Agent Tool Call Evaluation', {
   data: [

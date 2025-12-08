@@ -24,7 +24,7 @@ The function calls [`streamText`](https://ai-sdk.dev/docs/reference/ai-sdk-core/
 
 ```ts
 const result = runAgent(
-  wrapAISDKModel(google('gemini-2.0-flash')),
+  wrapAISDKModel(google('gemini-2.5-flash')),
   messages,
   stepCountIs(1),
 );
@@ -40,7 +40,7 @@ The `runAgent` function returns a stream that needs to be [consumed](https://ai-
 
 ```ts
 const result = runAgent(
-  wrapAISDKModel(google('gemini-2.0-flash')),
+  wrapAISDKModel(google('gemini-2.5-flash')),
   messages,
   stepCountIs(1),
 );

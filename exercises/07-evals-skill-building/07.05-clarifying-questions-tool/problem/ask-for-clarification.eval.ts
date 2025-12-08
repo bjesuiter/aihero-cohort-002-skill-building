@@ -28,7 +28,7 @@ evalite('Ask For Clarification Evaluation', {
   ],
   task: async (input) => {
     const result = runAgent(
-      wrapAISDKModel(google('gemini-2.0-flash')),
+      wrapAISDKModel(google('gemini-2.5-flash')),
       input,
       stepCountIs(1),
     );

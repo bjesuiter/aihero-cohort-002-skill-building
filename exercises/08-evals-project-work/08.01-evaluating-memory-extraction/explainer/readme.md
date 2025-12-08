@@ -223,8 +223,8 @@ import { createUIMessageFixture } from './create-ui-message-fixture';
 
 evalite.each([
   {
-    name: 'Gemini 2.5 Flash',
-    input: google('gemini-2.5-flash'),
+    name: 'Gemini 2.5 Flash Lite',
+    input: google('gemini-2.5-flash-lite'),
   },
   {
     name: 'Gemini 2.5 Flash Lite',
@@ -244,8 +244,8 @@ evalite.each([
 ```typescript
 evalite.each([
   {
-    name: 'Gemini 2.5 Flash',
-    input: google('gemini-2.5-flash'),
+    name: 'Gemini 2.5 Flash Lite',
+    input: google('gemini-2.5-flash-lite'),
   },
   {
     name: 'Gemini 2.5 Flash Lite',
@@ -274,8 +274,8 @@ evalite.each([
 ```typescript
 evalite.each([
   {
-    name: 'Gemini 2.5 Flash',
-    input: google('gemini-2.5-flash'),
+    name: 'Gemini 2.5 Flash Lite',
+    input: google('gemini-2.5-flash-lite'),
   },
   {
     name: 'Gemini 2.5 Flash Lite',
@@ -317,8 +317,8 @@ evalite.each([
 ```typescript
 evalite.each([
   {
-    name: 'Gemini 2.5 Flash',
-    input: google('gemini-2.5-flash'),
+    name: 'Gemini 2.5 Flash Lite',
+    input: google('gemini-2.5-flash-lite'),
   },
   {
     name: 'Gemini 2.5 Flash Lite',

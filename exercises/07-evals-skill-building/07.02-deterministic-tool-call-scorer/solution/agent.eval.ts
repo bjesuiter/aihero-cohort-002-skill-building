@@ -40,7 +40,7 @@ evalite('Agent Tool Call Evaluation', {
   ],
   task: async (messages) => {
     const result = runAgent(
-      wrapAISDKModel(google('gemini-2.0-flash')),
+      wrapAISDKModel(google('gemini-2.5-flash')),
       messages,
       stepCountIs(1),
     );

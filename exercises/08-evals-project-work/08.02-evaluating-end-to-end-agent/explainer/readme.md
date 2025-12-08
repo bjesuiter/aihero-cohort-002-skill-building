@@ -284,8 +284,8 @@ import { createUIMessageFixture } from './create-ui-message-fixture';
 // evals/e2e-retrieval.eval.ts
 evalite.each([
   {
-    name: 'Gemini 2.5 Flash',
-    input: google('gemini-2.5-flash'),
+    name: 'Gemini 2.5 Flash Lite',
+    input: google('gemini-2.5-flash-lite'),
   },
 ])('Search for information', {
   data: [
@@ -351,8 +351,8 @@ Recommendation: hand-code this commit. Customizing Evalite's UI is a powerful wa
 
 evalite.each([
   {
-    name: 'Gemini 2.5 Flash',
-    input: google('gemini-2.5-flash'),
+    name: 'Gemini 2.5 Flash Lite',
+    input: google('gemini-2.5-flash-lite'),
   },
 ])('Search for information', {
   data: [

@@ -8,8 +8,8 @@ import { wrapAISDKModel } from 'evalite/ai-sdk';
 
 evalite.each([
   {
-    name: 'Gemini 2.0 Flash',
-    input: google('gemini-2.0-flash'),
+    name: 'Gemini 2.5 Flash Lite',
+    input: google('gemini-2.5-flash-lite'),
   },
   {
     name: 'GPT-4.1 Mini',

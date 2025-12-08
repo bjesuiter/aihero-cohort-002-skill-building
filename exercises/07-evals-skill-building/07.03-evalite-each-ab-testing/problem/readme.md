@@ -16,7 +16,7 @@ The current setup has a single model in the array:
 evalite.each([
   {
     name: 'Gemini 2.0 Flash',
-    input: google('gemini-2.0-flash'),
+    input: google('gemini-2.5-flash'),
   },
 ])('Agent Tool Call Evaluation', {
   // ... rest of config
@@ -44,7 +44,7 @@ task: async (messages, model) => {
 
 Consider testing these options:
 
-- `google('gemini-2.0-flash-lite')` - A lighter, cheaper Gemini model
+- `google('gemini-2.5-flash-lite')` - A lighter, cheaper Gemini model
 - `google('gemini-1.5-flash')` - An earlier version of Gemini
 - Models from other providers like OpenAI or Anthropic
 
@@ -54,11 +54,11 @@ Here's how to add another model variant:
 evalite.each([
   {
     name: 'Gemini 2.0 Flash',
-    input: google('gemini-2.0-flash'),
+    input: google('gemini-2.5-flash'),
   },
   {
     name: 'Gemini 2.0 Flash Lite',
-    input: google('gemini-2.0-flash-lite'),
+    input: google('gemini-2.5-flash-lite'),
   },
 ]);
 ```

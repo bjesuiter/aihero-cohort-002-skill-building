@@ -62,7 +62,7 @@ export const POST = async (req: Request): Promise<Response> => {
       ].join('\n\n');
 
       const answer = streamText({
-        model: google('gemini-2.0-flash'),
+        model: google('gemini-2.5-flash'),
         system: `You are a helpful TypeScript book assistant that answers questions based on book content.
           You should use the provided book sections to answer questions accurately.
           ALWAYS cite sources using markdown formatting with the section number as the source.
