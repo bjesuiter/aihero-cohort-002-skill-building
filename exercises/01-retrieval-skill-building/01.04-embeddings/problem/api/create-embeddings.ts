@@ -1,8 +1,8 @@
-import path from 'path';
-import { readFile, writeFile } from 'fs/promises';
-import { cosineSimilarity, embed, embedMany } from 'ai';
-import { google } from '@ai-sdk/google';
-import { existsSync } from 'fs';
+import path from "path";
+import { readFile, writeFile } from "fs/promises";
+import { cosineSimilarity, embed, embedMany } from "ai";
+import { google } from "@ai-sdk/google";
+import { existsSync } from "fs";
 
 export type Email = {
   id: string;
@@ -22,10 +22,10 @@ export type Email = {
 export const loadEmails = async () => {
   const EMAILS_LOCATION = path.resolve(
     import.meta.dirname,
-    '../../../../../datasets/emails.json',
+    "../../../../../datasets/emails.json",
   );
 
-  const content = await readFile(EMAILS_LOCATION, 'utf8');
+  const content = await readFile(EMAILS_LOCATION, "utf8");
   const emails: Email[] = JSON.parse(content);
 
   return emails;
@@ -34,15 +34,14 @@ export const loadEmails = async () => {
 export type Embeddings = Record<string, number[]>;
 
 const getExistingEmbeddingsPath = (cacheKey: string) => {
-  return path.resolve(process.cwd(), 'data', `${cacheKey}.json`);
+  return path.resolve(process.cwd(), "data", `${cacheKey}.json`);
 };
 
 const saveEmbeddings = async (
   cacheKey: string,
   embeddingsResult: Embeddings,
 ) => {
-  const existingEmbeddingsPath =
-    getExistingEmbeddingsPath(cacheKey);
+  const existingEmbeddingsPath = getExistingEmbeddingsPath(cacheKey);
 
   await writeFile(
     existingEmbeddingsPath,
@@ -53,8 +52,7 @@ const saveEmbeddings = async (
 export const getExistingEmbeddings = async (
   cacheKey: string,
 ): Promise<Embeddings | undefined> => {
-  const existingEmbeddingsPath =
-    getExistingEmbeddingsPath(cacheKey);
+  const existingEmbeddingsPath = getExistingEmbeddingsPath(cacheKey);
 
   if (!existsSync(existingEmbeddingsPath)) {
     return;
@@ -63,7 +61,7 @@ export const getExistingEmbeddings = async (
   try {
     const existingEmbeddings = await readFile(
       existingEmbeddingsPath,
-      'utf8',
+      "utf8",
     );
     return JSON.parse(existingEmbeddings);
   } catch (error) {
@@ -72,7 +70,7 @@ export const getExistingEmbeddings = async (
 };
 
 const myEmbeddingModel = google.textEmbeddingModel(
-  'text-embedding-004',
+  "text-embedding-004",
 );
 
 export const embedEmails = async (
@@ -80,8 +78,7 @@ export const embedEmails = async (
 ): Promise<Embeddings> => {
   const emails = await loadEmails();
 
-  const existingEmbeddings =
-    await getExistingEmbeddings(cacheKey);
+  const existingEmbeddings = await getExistingEmbeddings(cacheKey);
 
   if (existingEmbeddings) {
     return existingEmbeddings;
@@ -114,8 +111,7 @@ export const embedEmails = async (
 };
 
 export const searchEmails = async (query: string) => {
-  const embeddings =
-    await getExistingEmbeddings(EMBED_CACHE_KEY);
+  const embeddings = await getExistingEmbeddings(EMBED_CACHE_KEY);
 
   if (!embeddings) {
     throw new Error(
@@ -139,8 +135,12 @@ export const searchEmails = async (query: string) => {
   return scores.sort((a, b) => b.score - a.score);
 };
 
-export const EMBED_CACHE_KEY = 'emails-google';
+export const EMBED_CACHE_KEY = "emails-google";
 
+// Steps:
+// 1. Call embedMany
+// 2. Pass emails as string of "subject - body"
+// 3. Return the right data structure
 const embedLotsOfText = async (
   emails: Email[],
 ): Promise<
@@ -149,19 +149,32 @@ const embedLotsOfText = async (
     embedding: number[];
   }[]
 > => {
-  // TODO: Implement this function by using the embedMany function
-  throw new Error('Not implemented');
+  const aiEmbed = await embedMany({
+    model: myEmbeddingModel,
+    values: emails.map((email) => `${email.subject} ${email.body}`),
+    maxRetries: 0,
+  });
+  return aiEmbed.embeddings.map((vector, i) => ({
+    id: emails.at(i)?.id || `email_${i + 1}`,
+    embedding: vector,
+  }));
 };
 
 const embedOnePieceOfText = async (
   text: string,
 ): Promise<number[]> => {
-  // TODO: Implement this function by using the embed function
+  const aiEmbed = await embed({
+    model: myEmbeddingModel,
+    value: text,
+    maxRetries: 0,
+  });
+
+  return aiEmbed.embedding;
 };
 
 const calculateScore = (
   queryEmbedding: number[],
   embedding: number[],
 ): number => {
-  // TODO: Implement this function by using the cosineSimilarity function
+  return cosineSimilarity(queryEmbedding, embedding);
 };

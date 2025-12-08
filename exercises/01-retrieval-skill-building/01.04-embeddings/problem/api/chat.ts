@@ -1,27 +1,29 @@
-import { google } from '@ai-sdk/google';
+import { google } from "@ai-sdk/google";
 import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
   streamText,
   type UIMessage,
-} from 'ai';
-import { searchEmails } from './create-embeddings.ts';
+} from "ai";
+import { searchEmails } from "./create-embeddings.ts";
 
 const formatMessageHistory = (messages: UIMessage[]) => {
   return messages
     .map((message) => {
-      return `${message.role}: ${message.parts
-        .map((part) => {
-          if (part.type === 'text') {
-            return part.text;
-          }
+      return `${message.role}: ${
+        message.parts
+          .map((part) => {
+            if (part.type === "text") {
+              return part.text;
+            }
 
-          return '';
-        })
-        .join('')}`;
+            return "";
+          })
+          .join("")
+      }`;
     })
-    .join('\n');
+    .join("\n");
 };
 
 export const POST = async (req: Request): Promise<Response> => {
@@ -32,37 +34,49 @@ export const POST = async (req: Request): Promise<Response> => {
     execute: async ({ writer }) => {
       // TODO: call the searchEmails function with the
       // conversation history to get the search results
-      const searchResults = TODO;
+      const historyString = formatMessageHistory(messages);
+      const searchResults = await searchEmails(historyString);
 
       // TODO: take the top X search results
-      const topSearchResults = TODO;
+      const topSearchResults = searchResults.slice(0, 10).filter(
+        (searchResult) => searchResult.score > 0,
+      );
+
+      console.log(
+        `Top Search Results with embedding: `,
+        topSearchResults.map((topResult) =>
+          `${topResult.score} - ${topResult.email.subject}`
+        ),
+      );
 
       const emailSnippets = [
-        '## Emails',
+        "## Emails",
         ...topSearchResults.map((result, i) => {
-          const from = result.email?.from || 'unknown';
-          const to = result.email?.to || 'unknown';
-          const subject =
-            result.email?.subject || `email-${i + 1}`;
-          const body = result.email?.body || '';
+          const from = result.email?.from || "unknown";
+          const to = result.email?.to || "unknown";
+          const subject = result.email?.subject || `email-${i + 1}`;
+          const body = result.email?.body || "";
           const score = result.score.toFixed(3);
 
           return [
-            `### 📧 Email ${i + 1}: [${subject}](#${subject.replace(/[^a-zA-Z0-9]/g, '-')})`,
+            `### 📧 Email ${i + 1}: [${subject}](#${
+              subject.replace(/[^a-zA-Z0-9]/g, "-")
+            })`,
             `**From:** ${from}`,
             `**To:** ${to}`,
             `**Relevance Score:** ${score}`,
             body,
-            '---',
-          ].join('\n\n');
+            "---",
+          ].join("\n\n");
         }),
-        '## Instructions',
+        "## Instructions",
         "Based on the emails above, please answer the user's question. Always cite your sources using the email subject in markdown format.",
-      ].join('\n\n');
+      ].join("\n\n");
 
       const answer = streamText({
-        model: google('gemini-2.5-flash'),
-        system: `You are a helpful email assistant that answers questions based on email content.
+        model: google("gemini-2.5-flash"),
+        system:
+          `You are a helpful email assistant that answers questions based on email content.
           You should use the provided emails to answer questions accurately.
           ALWAYS cite sources using markdown formatting with the email subject as the source.
           Be concise but thorough in your explanations.
@@ -70,7 +84,7 @@ export const POST = async (req: Request): Promise<Response> => {
         messages: [
           ...convertToModelMessages(messages),
           {
-            role: 'user',
+            role: "user",
             content: emailSnippets,
           },
         ],
