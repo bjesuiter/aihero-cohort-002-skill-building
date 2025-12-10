@@ -1,4 +1,4 @@
-import { google } from '@ai-sdk/google';
+import { google } from "@ai-sdk/google";
 import {
   convertToModelMessages,
   createUIMessageStream,
@@ -7,13 +7,9 @@ import {
   generateObject,
   streamText,
   type UIMessage,
-} from 'ai';
-import { z } from 'zod';
-import {
-  loadMemories,
-  saveMemories,
-  type DB,
-} from './memory-persistence.ts';
+} from "ai";
+import { z } from "zod";
+import { type DB, loadMemories, saveMemories } from "./memory-persistence.ts";
 
 export type MyMessage = UIMessage<unknown, {}>;
 
@@ -21,7 +17,7 @@ const formatMemory = (memory: DB.MemoryItem) => {
   return [
     `Memory: ${memory.memory}`,
     `Created At: ${memory.createdAt}`,
-  ].join('\n');
+  ].join("\n");
 };
 
 export const POST = async (req: Request): Promise<Response> => {
@@ -30,15 +26,16 @@ export const POST = async (req: Request): Promise<Response> => {
 
   const memories = await loadMemories();
 
-  const memoriesText = memories.map(formatMemory).join('\n\n');
+  const memoriesText = memories.map(formatMemory).join("\n\n");
 
   const stream = createUIMessageStream<MyMessage>({
     execute: async ({ writer }) => {
       const result = streamText({
-        model: google('gemini-2.5-flash-lite'),
-        system: `You are a helpful assistant that can answer questions and help with tasks.
+        model: google("gemini-2.5-flash-lite"),
+        system:
+          `You are a helpful assistant that can answer questions and help with tasks.
 
-        The date is ${new Date().toISOString().split('T')[0]}.
+        The date is ${new Date().toISOString().split("T")[0]}.
 
         You have access to the following memories:
 
@@ -55,11 +52,12 @@ export const POST = async (req: Request): Promise<Response> => {
       const allMessages = [...messages, ...response.messages];
 
       const memoriesResult = await generateObject({
-        model: google('gemini-2.5-flash-lite'),
+        model: google("gemini-2.5-flash-lite"),
         schema: z.object({
           memories: z.array(z.string()),
         }),
-        system: `You are a memory extraction agent. Your task is to analyze the conversation history and extract permanent memories about the user.
+        system:
+          `You are a memory extraction agent. Your task is to analyze the conversation history and extract permanent memories about the user.
 
         PERMANENT MEMORIES are facts about the user that:
         - Are unlikely to change over time (preferences, traits, characteristics)
@@ -80,10 +78,14 @@ export const POST = async (req: Request): Promise<Response> => {
         - "User is currently debugging code" (situational)
         - "User said hello" (trivial interaction)
 
-        Extract any new permanent memories from this conversation. Return an array of memory strings that should be added to the user's permanent memory. Each memory should be a concise, factual statement about the user.
+        Extract any new permanent memories from this conversation. 
+        Return an array of memory strings that should be added to the user's permanent memory. 
+        Each memory should be a concise, factual statement about the user.
 
-        EXISTING MEMORIES:
+        EXISTING MEMORIES (DO NOT INCLUDE THESE IN YOUR RESPONSE):
+        <existing-memories>
         ${memoriesText}
+        </existing-memories>
 
         If no new permanent memories are found, return an empty array.`,
         messages: convertToModelMessages(allMessages),
@@ -91,7 +93,7 @@ export const POST = async (req: Request): Promise<Response> => {
 
       const newMemories = memoriesResult.object.memories;
 
-      console.log('newMemories', newMemories);
+      console.log("newMemories", newMemories);
 
       saveMemories(
         newMemories.map((memory) => ({
