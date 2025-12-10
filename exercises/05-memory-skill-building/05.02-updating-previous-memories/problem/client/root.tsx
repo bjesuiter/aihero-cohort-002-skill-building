@@ -9,7 +9,7 @@ const App = () => {
   const { messages, sendMessage } = useChat<MyMessage>({});
 
   const [input, setInput] = useState(
-    `Interview me about my life and work. Ask one question at a time.`,
+    `Interview me about the stations of my work life. Ask me one question at a time`,
   );
 
   console.log(messages);
