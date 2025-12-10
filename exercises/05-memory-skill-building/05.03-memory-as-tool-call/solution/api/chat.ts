@@ -1,4 +1,4 @@
-import { google } from '@ai-sdk/google';
+import { google } from "@ai-sdk/google";
 import {
   convertToModelMessages,
   createUIMessageStreamResponse,
@@ -7,15 +7,15 @@ import {
   streamText,
   tool,
   type UIMessage,
-} from 'ai';
-import { z } from 'zod';
+} from "ai";
+import { z } from "zod";
 import {
+  type DB,
+  deleteMemory,
   loadMemories,
   saveMemories,
-  deleteMemory,
   updateMemory,
-  type DB,
-} from './memory-persistence.ts';
+} from "./memory-persistence.ts";
 
 export type MyMessage = UIMessage<unknown, {}>;
 
@@ -24,7 +24,7 @@ const formatMemory = (memory: DB.MemoryItem) => {
     `Memory: ${memory.memory}`,
     `ID: ${memory.id}`,
     `Created At: ${memory.createdAt}`,
-  ].join('\n');
+  ].join("\n");
 };
 
 export const POST = async (req: Request): Promise<Response> => {
@@ -33,13 +33,15 @@ export const POST = async (req: Request): Promise<Response> => {
 
   const memories = await loadMemories();
 
-  const memoriesText = memories.map(formatMemory).join('\n\n');
+  const memoriesText = memories.map(formatMemory).join("\n\n");
 
   const result = streamText({
-    model: google('gemini-2.5-flash-lite'),
-    system: `You are a helpful assistant that can answer questions and help with tasks.
+    // NOTE: gemini-2.5-flash-lite is too dumb to do tool calls
+    model: google("gemini-2.5-flash"),
+    system:
+      `You are a helpful assistant that can answer questions and help with tasks.
 
-    The date is ${new Date().toISOString().split('T')[0]}.
+    The date is ${new Date().toISOString().split("T")[0]}.
 
     You have access to the following memories:
 
@@ -62,7 +64,7 @@ export const POST = async (req: Request): Promise<Response> => {
     tools: {
       manageMemories: tool({
         description:
-          'Manage user memories by adding new ones, updating existing ones, or deleting outdated/incorrect ones. Call this when the user shares personal information, contradicts previous statements, or explicitly asks to remember/forget something.',
+          "Manage user memories by adding new ones, updating existing ones, or deleting outdated/incorrect ones. Call this when the user shares personal information, contradicts previous statements, or explicitly asks to remember/forget something.",
         inputSchema: z.object({
           updates: z
             .array(
@@ -70,20 +72,20 @@ export const POST = async (req: Request): Promise<Response> => {
                 id: z
                   .string()
                   .describe(
-                    'The ID of the existing memory to update',
+                    "The ID of the existing memory to update",
                   ),
                 memory: z
                   .string()
-                  .describe('The updated memory content'),
+                  .describe("The updated memory content"),
               }),
             )
             .describe(
-              'Array of existing memories that need to be updated with new information',
+              "Array of existing memories that need to be updated with new information",
             ),
           deletions: z
             .array(z.string())
             .describe(
-              'Array of memory IDs that should be deleted (outdated, incorrect, or no longer relevant)',
+              "Array of memory IDs that should be deleted (outdated, incorrect, or no longer relevant)",
             ),
           additions: z
             .array(z.string())
@@ -92,15 +94,14 @@ export const POST = async (req: Request): Promise<Response> => {
             ),
         }),
         execute: async ({ updates, deletions, additions }) => {
-          console.log('Memory tool called:');
-          console.log('Updates:', updates);
-          console.log('Deletions:', deletions);
-          console.log('Additions:', additions);
+          console.log("Memory tool called:");
+          console.log("Updates:", updates);
+          console.log("Deletions:", deletions);
+          console.log("Additions:", additions);
 
           // Filter out deletions that are being updated
           const filteredDeletions = deletions.filter(
-            (deletion) =>
-              !updates.some((update) => update.id === deletion),
+            (deletion) => !updates.some((update) => update.id === deletion),
           );
 
           // Perform updates
@@ -108,13 +109,11 @@ export const POST = async (req: Request): Promise<Response> => {
             updateMemory(update.id, {
               memory: update.memory,
               createdAt: new Date().toISOString(),
-            }),
+            })
           );
 
           // Perform deletions
-          filteredDeletions.forEach((deletion) =>
-            deleteMemory(deletion),
-          );
+          filteredDeletions.forEach((deletion) => deleteMemory(deletion));
 
           // Perform additions
           saveMemories(
@@ -127,7 +126,8 @@ export const POST = async (req: Request): Promise<Response> => {
 
           return {
             success: true,
-            message: `Updated ${updates.length} memories, deleted ${filteredDeletions.length} memories, added ${additions.length} new memories.`,
+            message:
+              `Updated ${updates.length} memories, deleted ${filteredDeletions.length} memories, added ${additions.length} new memories.`,
           };
         },
       }),
