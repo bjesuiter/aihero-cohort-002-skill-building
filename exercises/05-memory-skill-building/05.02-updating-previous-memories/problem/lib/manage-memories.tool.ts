@@ -8,7 +8,7 @@ import {
     updateMemory,
 } from "../api/memory-persistence.ts";
 
-const manageMemoriesTool = tool({
+export const manageMemoriesTool = tool({
     name: `manageMemory`,
     description:
         `A tool to create, update and delete facts about the user to enrich the conversation with helpful context about the user.`,
