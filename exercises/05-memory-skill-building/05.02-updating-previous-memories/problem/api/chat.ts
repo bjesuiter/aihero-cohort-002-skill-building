@@ -3,19 +3,12 @@ import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
-  generateId,
   generateObject,
   streamText,
   type UIMessage,
 } from "ai";
 import { z } from "zod";
-import {
-  type DB,
-  deleteMemory,
-  loadMemories,
-  saveMemories,
-  updateMemory,
-} from "./memory-persistence.ts";
+import { type DB, loadMemories } from "./memory-persistence.ts";
 
 export type MyMessage = UIMessage<unknown, {}>;
 
@@ -31,7 +24,7 @@ export const POST = async (req: Request): Promise<Response> => {
   const body: { messages: MyMessage[] } = await req.json();
   const { messages } = body;
 
-  const memories = await loadMemories();
+  const memories = loadMemories();
 
   const memoriesText = memories.map(formatMemory).join("\n\n");
   const stream = createUIMessageStream<MyMessage>({
@@ -146,43 +139,6 @@ export const POST = async (req: Request): Promise<Response> => {
       });
 
       const { updates, deletions, additions } = memoriesResult.object;
-
-      console.log("Updates", updates);
-      console.log("Deletions", deletions);
-      console.log("Additions", additions);
-
-      // Only delete memories that are not being updated
-      const filteredDeletions = deletions.filter(
-        (deletion) => !updates.some((update) => update.id === deletion),
-      );
-
-      // Added: Update the memories that need to be updated
-      // by calling updateMemory for each update
-      for (const update of updates) {
-        const oldMemory = memories.find((memory) => update.id === memory.id);
-        if (!oldMemory) {
-          console.log(`Memory to update not found!`, update);
-          continue;
-        }
-        updateMemory(update.id, {
-          ...oldMemory,
-          memory: update.memory,
-        });
-      }
-
-      // Added: Delete the memories that need to be deleted
-      // by calling deleteMemory for each filtered deletion
-      for (const deletion of deletions) {
-        deleteMemory(deletion);
-      }
-
-      // Added: Save the new memories by calling saveMemories
-      // with the new memories
-      saveMemories(additions.map((addition) => ({
-        id: generateId(),
-        memory: addition,
-        createdAt: new Date().toISOString(),
-      })));
     },
   });
 
