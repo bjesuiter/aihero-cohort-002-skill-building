@@ -57,6 +57,11 @@ export const POST = async (req: Request): Promise<Response> => {
     onFinish: async (response) => {
       const allMessages = [...messages, ...response.messages];
 
+      // PERSONAL NOTE: For a custom AI System I'd want explicit knowledge saving the most time,
+      // except when the user brings up some key information, like Job history, Girlfriend or mariage, Kids or Life goals.
+      // Make sure to categorize the "hardness" of the information:
+      // A job change is a hard fact that gets recorded once and never changes in the future.
+      // A Life Goal is more of a "plan" with different levels of certainty (User is thinking of, user is determined to, etc.)
       const memoriesResult = await generateObject({
         model: google("gemini-2.5-flash"),
         schema: z.object({
