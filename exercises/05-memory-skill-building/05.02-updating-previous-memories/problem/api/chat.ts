@@ -108,10 +108,20 @@ export const POST = async (req: Request): Promise<Response> => {
 
         Extract any new permanent memories from this conversation. 
         Return them as an array in the "additions" property of your reponse. 
+
         Memories can also be updated. If you find a memory in the conversation that changed, 
         take it's id and generate an updated memory. 
+        More markers for "changed" or "updated" memories include: 
+        - User preferences change
+        - New information contradicts old information
+        - Clarifications are provided
         Return both as an entry in the "updates" property in the response object. 
-        Lastly, memories could go stale. You can delete them in this case 
+
+        Lastly, memories could go stale. Markers for that are: 
+        - Information is outdated
+        - Information is incorrect
+        - Information is no longer relevant
+        You can delete them in this case 
         by listing their memory id in the "deletions" property of the response object. 
 
         +Each memory should be a concise, factual statement about the user.
