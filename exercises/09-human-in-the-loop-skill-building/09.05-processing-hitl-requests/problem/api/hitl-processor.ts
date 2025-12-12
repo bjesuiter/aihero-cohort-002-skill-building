@@ -5,6 +5,7 @@ import type {
 } from "./chat.ts";
 
 export type HITLError = {
+  type: "HITLError";
   message: string;
   status: number;
 };
@@ -79,6 +80,7 @@ export const findDecisionsToProcess = (opts: {
     // the user should make a decision before continuing.
     if (!decision) {
       return {
+        type: "HITLError",
         message: `Pending tool call not settled: ${tool.id}`,
         status: 400,
       } satisfies HITLError;

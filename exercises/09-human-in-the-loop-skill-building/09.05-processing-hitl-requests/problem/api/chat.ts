@@ -116,9 +116,16 @@ export const POST = async (req: Request): Promise<Response> => {
   // we should return a Response with the error message
   // CAUTION: We can only see this in the network panel right now, since this does not send a message in the message stream!
   if ("status" in hitlResult) {
+    // TODO: make this error response visible in the message stream for the user!
     return new Response(hitlResult.message, {
       status: hitlResult.status,
     });
+
+    // const errorStream = createUIMessageStream<MyMessage>({
+    //   execute: async ({ writer }) => {
+    //   },
+    // });
+    // return createUIMessageStreamResponse({ stream: errorStream });
   }
 
   console.dir(hitlResult, { depth: null });
