@@ -1,18 +1,20 @@
-import { google } from '@ai-sdk/google';
+import { google } from "@ai-sdk/google";
 import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
+  generateId,
+  hasToolCall,
   stepCountIs,
   streamText,
   type UIMessage,
-} from 'ai';
-import z from 'zod';
-import { sendEmail } from './email-service.ts';
+} from "ai";
+import z from "zod";
+import { sendEmail } from "./email-service.ts";
 
 export type ToolRequiringApproval = {
   id: string;
-  type: 'send-email';
+  type: "send-email";
   content: string;
   to: string;
   subject: string;
@@ -21,7 +23,7 @@ export type ToolRequiringApproval = {
 export type MyMessage = UIMessage<
   unknown,
   {
-    'approval-request': {
+    "approval-request": {
       tool: ToolRequiringApproval;
     };
   }
@@ -34,7 +36,7 @@ export const POST = async (req: Request): Promise<Response> => {
   const stream = createUIMessageStream<MyMessage>({
     execute: async ({ writer }) => {
       const streamTextResponse = streamText({
-        model: google('gemini-2.5-flash'),
+        model: google("gemini-2.5-flash"),
         system: `
           You are a helpful assistant that can send emails.
           You will be given a diary of the conversation so far.
@@ -43,26 +45,38 @@ export const POST = async (req: Request): Promise<Response> => {
         messages: convertToModelMessages(messages),
         tools: {
           sendEmail: {
-            description: 'Send an email',
+            description: "Send an email",
             inputSchema: z.object({
               to: z.string(),
               subject: z.string(),
               content: z.string(),
             }),
             execute: async ({ to, subject, content }) => {
-              // TODO: change this so that it sends a part
+              // Added: change this so that it sends a part
               // of data-approval-request to the writer instead of
               // sending the email.
-              await sendEmail({ to, subject, content });
+              writer.write({
+                type: "data-approval-request",
+                data: {
+                  tool: {
+                    id: generateId(),
+                    type: "send-email",
+                    content,
+                    to,
+                    subject,
+                  },
+                },
+              });
+              // await sendEmail({ to, subject, content });
 
-              return 'Requested to send an email';
+              return "Requested to send an email";
             },
           },
         },
-        // TODO: we now want a second stop condition - we
+        // Added: we now want a second stop condition - we
         // want to stop EITHER when the step count is 10,
         // OR when the agent has sent the sendEmail tool call.
-        stopWhen: [stepCountIs(10)],
+        stopWhen: [stepCountIs(10), hasToolCall("sendEmail")],
       });
 
       writer.merge(streamTextResponse.toUIMessageStream());
