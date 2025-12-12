@@ -37,7 +37,7 @@ export const POST = async (req: Request): Promise<Response> => {
   const memoriesText = memories.map(formatMemory).join("\n\n");
 
   const result = streamText({
-    model: google("gemini-2.5-flash-lite"),
+    model: google("gemini-2.5-flash"),
     system:
       `You are a helpful assistant that can answer questions and help with tasks.
 

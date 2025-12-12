@@ -84,7 +84,9 @@ export const POST = async (req: Request): Promise<Response> => {
         - "User is currently debugging code" (situational)
         - "User said hello" (trivial interaction)
 
-        Extract any new permanent memories from this conversation. Return an array of memory strings that should be added to the user's permanent memory. Each memory should be a concise, factual statement about the user.
+        Extract any new permanent memories from this conversation. 
+        Return an array of memory strings that should be added to the user's permanent memory. 
+        Each memory should be a concise, factual statement about the user.
 
         EXISTING MEMORIES:
         ${memoriesText}
