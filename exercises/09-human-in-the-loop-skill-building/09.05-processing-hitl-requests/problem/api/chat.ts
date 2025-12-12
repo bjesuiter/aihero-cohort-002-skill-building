@@ -1,21 +1,21 @@
-import { google } from '@ai-sdk/google';
+import { google } from "@ai-sdk/google";
 import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
   hasToolCall,
+  type ModelMessage,
   stepCountIs,
   streamText,
-  type ModelMessage,
   type UIMessage,
-} from 'ai';
-import z from 'zod';
-import { sendEmail } from './email-service.ts';
-import { findDecisionsToProcess } from './hitl-processor.ts';
+} from "ai";
+import z from "zod";
+import { sendEmail } from "./email-service.ts";
+import { findDecisionsToProcess } from "./hitl-processor.ts";
 
 export type ToolRequiringApproval = {
   id: string;
-  type: 'send-email';
+  type: "send-email";
   content: string;
   to: string;
   subject: string;
@@ -23,20 +23,20 @@ export type ToolRequiringApproval = {
 
 export type ToolApprovalDecision =
   | {
-      type: 'approve';
-    }
+    type: "approve";
+  }
   | {
-      type: 'reject';
-      reason: string;
-    };
+    type: "reject";
+    reason: string;
+  };
 
 export type MyMessage = UIMessage<
   unknown,
   {
-    'approval-request': {
+    "approval-request": {
       tool: ToolRequiringApproval;
     };
-    'approval-decision': {
+    "approval-decision": {
       // The original tool ID that this decision is for.
       toolId: string;
       decision: ToolApprovalDecision;
@@ -51,21 +51,22 @@ const annotateMessageHistory = (
     messages,
     {
       convertDataPart(part) {
-        if (part.type === 'data-approval-request') {
+        if (part.type === "data-approval-request") {
           return {
-            type: 'text',
-            text: `The assistant requested to send an email: To: ${part.data.tool.to}, Subject: ${part.data.tool.subject}, Content: ${part.data.tool.content}`,
+            type: "text",
+            text:
+              `The assistant requested to send an email: To: ${part.data.tool.to}, Subject: ${part.data.tool.subject}, Content: ${part.data.tool.content}`,
           };
         }
-        if (part.type === 'data-approval-decision') {
-          if (part.data.decision.type === 'approve') {
+        if (part.type === "data-approval-decision") {
+          if (part.data.decision.type === "approve") {
             return {
-              type: 'text',
-              text: 'The user approved the tool.',
+              type: "text",
+              text: "The user approved the tool.",
             };
           }
           return {
-            type: 'text',
+            type: "text",
             text: `The user rejected the tool: ${part.data.decision.reason}`,
           };
         }
@@ -81,16 +82,27 @@ export const POST = async (req: Request): Promise<Response> => {
   const body: { messages: MyMessage[] } = await req.json();
   const { messages } = body;
 
-  const mostRecentUserMessage = messages[messages.length - 1];
+  const mostRecentUserMessage = messages.at(messages.length - 1);
 
-  // TODO: return a Response of status 400 if there
+  // Added: return a Response of status 400 if there
   // is no most recent user message.
+  if (!mostRecentUserMessage) {
+    return new Response("No user message available", {
+      status: 400,
+    });
+  }
+
+  if (mostRecentUserMessage.role !== "user") {
+    return new Response("Last message must be a user message", {
+      status: 400,
+    });
+  }
 
   // NOTE: assistant messages are allowed to be undefined,
   // since at the very start of the conversation we'll only
   // have a user message.
   const mostRecentAssistantMessage = messages.findLast(
-    (message) => message.role === 'assistant',
+    (message) => message.role === "assistant",
   );
 
   const hitlResult = findDecisionsToProcess({
@@ -98,9 +110,12 @@ export const POST = async (req: Request): Promise<Response> => {
     mostRecentAssistantMessage,
   });
 
+  console.log("hitlResult:", hitlResult);
+
   // NOTE: if hitlResult returns a HITLError,
   // we should return a Response with the error message
-  if ('status' in hitlResult) {
+  // CAUTION: We can only see this in the network panel right now, since this does not send a message in the message stream!
+  if ("status" in hitlResult) {
     return new Response(hitlResult.message, {
       status: hitlResult.status,
     });
@@ -108,13 +123,12 @@ export const POST = async (req: Request): Promise<Response> => {
 
   console.dir(hitlResult, { depth: null });
 
-  const annotatedMessageHistory =
-    annotateMessageHistory(messages);
+  const annotatedMessageHistory = annotateMessageHistory(messages);
 
   const stream = createUIMessageStream<MyMessage>({
     execute: async ({ writer }) => {
       const streamTextResponse = streamText({
-        model: google('gemini-2.5-flash'),
+        model: google("gemini-2.5-flash"),
         system: `
           You are a helpful assistant that can send emails.
           You will be given a diary of the conversation so far.
@@ -123,7 +137,7 @@ export const POST = async (req: Request): Promise<Response> => {
         messages: annotatedMessageHistory,
         tools: {
           sendEmail: {
-            description: 'Send an email',
+            description: "Send an email",
             inputSchema: z.object({
               to: z.string(),
               subject: z.string(),
@@ -131,11 +145,11 @@ export const POST = async (req: Request): Promise<Response> => {
             }),
             execute: ({ to, subject, content }) => {
               writer.write({
-                type: 'data-approval-request',
+                type: "data-approval-request",
                 data: {
                   tool: {
                     id: crypto.randomUUID(),
-                    type: 'send-email',
+                    type: "send-email",
                     to,
                     subject,
                     content,
@@ -143,11 +157,11 @@ export const POST = async (req: Request): Promise<Response> => {
                 },
               });
 
-              return 'Requested to send an email';
+              return "Requested to send an email";
             },
           },
         },
-        stopWhen: [stepCountIs(10), hasToolCall('sendEmail')],
+        stopWhen: [stepCountIs(10), hasToolCall("sendEmail")],
       });
 
       writer.merge(streamTextResponse.toUIMessageStream());
