@@ -1,54 +1,55 @@
-import { google } from '@ai-sdk/google';
+import { google } from "@ai-sdk/google";
 import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
   hasToolCall,
+  type ModelMessage,
   stepCountIs,
   streamText,
-  type ModelMessage,
   type UIMessage,
-} from 'ai';
-import z from 'zod';
-import { sendEmail } from './email-service.ts';
-import { findDecisionsToProcess } from './hitl-processor.ts';
+} from "ai";
+import z from "zod";
+import { sendEmail } from "./email-service.ts";
+import { findDecisionsToProcess } from "./hitl-processor.ts";
+import { type } from "../../../../../_archived/03.03-fixed-chunks-with-retrieval/solution/api/utils";
 
 export type ToolRequiringApproval = {
   id: string;
-  type: 'send-email';
+  type: "send-email";
   content: string;
   to: string;
   subject: string;
 };
 
 export type ToolRequiringApprovalOutput = {
-  type: 'send-email';
+  type: "send-email";
   message: string;
 };
 
 export type ToolApprovalDecision =
   | {
-      type: 'approve';
-    }
+    type: "approve";
+  }
   | {
-      type: 'reject';
-      reason: string;
-    };
+    type: "reject";
+    reason: string;
+  };
 
 export type MyMessage = UIMessage<
   unknown,
   {
-    'approval-request': {
+    "approval-request": {
       tool: ToolRequiringApproval;
     };
-    'approval-decision': {
+    "approval-decision": {
       // The original tool ID that this decision is for.
       toolId: string;
       decision: ToolApprovalDecision;
     };
     // NOTE: I've added an approval-result part to the MyMessage
     // type, so that we can store the output of the tool.
-    'approval-result': {
+    "approval-result": {
       output: ToolRequiringApprovalOutput;
       // The original tool ID that this output is for.
       toolId: string;
@@ -63,27 +64,38 @@ const annotateMessageHistory = (
     messages,
     {
       convertDataPart(part) {
-        if (part.type === 'data-approval-request') {
+        if (part.type === "data-approval-request") {
           return {
-            type: 'text',
-            text: `The assistant requested to send an email: To: ${part.data.tool.to}, Subject: ${part.data.tool.subject}, Content: ${part.data.tool.content}`,
+            type: "text",
+            text:
+              `The assistant requested to send an email: To: ${part.data.tool.to}, Subject: ${part.data.tool.subject}, Content: ${part.data.tool.content}`,
           };
         }
-        if (part.type === 'data-approval-decision') {
-          if (part.data.decision.type === 'approve') {
+        if (part.type === "data-approval-decision") {
+          if (part.data.decision.type === "approve") {
             return {
-              type: 'text',
-              text: 'The user approved the tool.',
+              type: "text",
+              text: "The user approved the tool.",
             };
           }
           return {
-            type: 'text',
+            type: "text",
             text: `The user rejected the tool: ${part.data.decision.reason}`,
           };
         }
 
-        // TODO: add a case for data-approval-result for after the tool
+        // Added: add a case for data-approval-result for after the tool
         // has been executed.
+
+        if (part.type === "data-approval-result") {
+          return {
+            type: "text",
+            text:
+              `The tool with toolId "${part.data.toolId}" returned the output: ` +
+              part.data.output,
+          };
+        }
+
         return part;
       },
     },
@@ -99,19 +111,19 @@ export const POST = async (req: Request): Promise<Response> => {
   const mostRecentUserMessage = messages[messages.length - 1];
 
   if (!mostRecentUserMessage) {
-    return new Response('Messages array cannot be empty', {
+    return new Response("Messages array cannot be empty", {
       status: 400,
     });
   }
 
-  if (mostRecentUserMessage.role !== 'user') {
-    return new Response('Last message must be a user message', {
+  if (mostRecentUserMessage.role !== "user") {
+    return new Response("Last message must be a user message", {
       status: 400,
     });
   }
 
   const mostRecentAssistantMessage = messages.findLast(
-    (message) => message.role === 'assistant',
+    (message) => message.role === "assistant",
   );
 
   const hitlResult = findDecisionsToProcess({
@@ -119,7 +131,7 @@ export const POST = async (req: Request): Promise<Response> => {
     mostRecentAssistantMessage,
   });
 
-  if ('status' in hitlResult) {
+  if ("status" in hitlResult) {
     return new Response(hitlResult.message, {
       status: hitlResult.status,
     });
@@ -135,13 +147,36 @@ export const POST = async (req: Request): Promise<Response> => {
       const messagesAfterHitl = [...messages];
 
       for (const { tool, decision } of hitlResult) {
-        if (decision.type === 'approve') {
-          // TODO: the user has approved the tool, so
+        if (decision.type === "approve") {
+          // Added: the user has approved the tool, so
           // we should send the email!
+          const sendResult = sendEmail({
+            to: tool.to,
+            subject: tool.subject,
+            content: tool.content,
+          });
           //
-          // TODO: we should also add a data-approval-result
+          // Added: we should also add a data-approval-result
           // part to the messages array, and write it to
           // the frontend.
+          const messagePart = {
+            type: "data-approval-result" as const,
+            data: {
+              toolId: tool.id,
+              output: {
+                type: tool.type,
+                message: "Email sent!",
+              },
+            },
+          };
+
+          // Write the result of the tool to the stream
+          writer.write(messagePart);
+
+          // Add the message part to the messages array
+          messagesAfterHitl[
+            messagesAfterHitl.length - 1
+          ]!.parts.push(messagePart);
         }
       }
 
@@ -154,7 +189,7 @@ export const POST = async (req: Request): Promise<Response> => {
       );
 
       const streamTextResponse = streamText({
-        model: google('gemini-2.5-flash'),
+        model: google("gemini-2.5-flash"),
         system: `
           You are a helpful assistant that can send emails.
           You will be given a diary of the conversation so far.
@@ -163,7 +198,7 @@ export const POST = async (req: Request): Promise<Response> => {
         prompt: annotatedMessages,
         tools: {
           sendEmail: {
-            description: 'Send an email',
+            description: "Send an email",
             inputSchema: z.object({
               to: z.string(),
               subject: z.string(),
@@ -171,11 +206,11 @@ export const POST = async (req: Request): Promise<Response> => {
             }),
             execute: ({ to, subject, content }) => {
               writer.write({
-                type: 'data-approval-request',
+                type: "data-approval-request",
                 data: {
                   tool: {
                     id: crypto.randomUUID(),
-                    type: 'send-email',
+                    type: "send-email",
                     to,
                     subject,
                     content,
@@ -183,11 +218,11 @@ export const POST = async (req: Request): Promise<Response> => {
                 },
               });
 
-              return 'Requested to send an email';
+              return "Requested to send an email";
             },
           },
         },
-        stopWhen: [stepCountIs(10), hasToolCall('sendEmail')],
+        stopWhen: [stepCountIs(10), hasToolCall("sendEmail")],
       });
 
       writer.merge(streamTextResponse.toUIMessageStream());
