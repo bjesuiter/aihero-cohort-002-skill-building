@@ -3,7 +3,9 @@ tsconfig.temp.json
 dist
 *.tsbuildinfo
 .vscode/*.code-snippets
-.env
+.env*
+!.env.schema
+!.env.jb
 *.local.*
 .next
 next-env.d.ts

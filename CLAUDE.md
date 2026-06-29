@@ -81,11 +81,26 @@ To run an exercise: execute `main.ts` in problem/solution/explainer folder (call
 
 ## API Keys
 
-Required environment variables in `.env` (copy from `.env.example`):
+Environment variables are declared in `.env.schema` and loaded with
+Varlock. Real env files such as `.env` stay gitignored.
 
-- `GOOGLE_GENERATIVE_AI_API_KEY` - Google Gemini models
+- `GOOGLE_GENERATIVE_AI_API_KEY` - Google Gemini models (default)
 - `ANTHROPIC_API_KEY` - Claude models (optional)
 - `OPENAI_API_KEY` - GPT models (optional)
+- `OPENCODE_ZEN_API_KEY` - OpenCode Zen provider helpers (optional)
+- `OPENCODE_ZEN_API_ENDPOINT` - OpenCode Zen endpoint (optional)
+
+Run app commands through the package scripts so they execute via
+`DEV_ENV=jb varlock run -- ...`. Local development uses inline profile
+selection in scripts; committed `.env.jb` contains Varlock-native
+`keychain()` resolver refs imported with `varlock keychain import`.
+For macOS secrets, use service `varlock` and account
+`aihero-cohort-002-skill-building:jb:<ENV_VAR_NAME>`.
+Include
+`/Users/bjesuiter/Develop/bjesuiter/aihero-cohort-002-skill-building`
+as a Keychain comment/label when supported by the Keychain tool.
+Production and CI still provide the same env var names through platform
+secrets, not local macOS Keychain.
 
 ## Datasets
 

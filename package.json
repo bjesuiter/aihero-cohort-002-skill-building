@@ -5,10 +5,13 @@
   "repository": "https://github.com/ai-hero-dev/ai-sdk-v5-crash-course",
   "type": "module",
   "scripts": {
-    "dev": "ai-hero-cli exercise",
-    "exercise": "ai-hero-cli exercise",
+    "dev": "DEV_ENV=jb varlock run -- ai-hero-cli exercise",
+    "exercise": "DEV_ENV=jb varlock run -- ai-hero-cli exercise",
+    "env:check": "varlock load --agent --path .env.schema",
+    "env:load": "DEV_ENV=jb varlock load",
+    "env:scan": "varlock scan",
     "prepare": "husky",
-    "get-diffs": "ai-hero-cli internal get-diffs --branch=live-run-through --project-repo=../cohort-002-project"
+    "get-diffs": "DEV_ENV=jb varlock run -- ai-hero-cli internal get-diffs --branch=live-run-through --project-repo=../cohort-002-project"
   },
   "keywords": [],
   "author": "",
@@ -67,7 +70,8 @@
     "husky": "^9.1.7",
     "prettier": "^3.6.2",
     "tailwind-scrollbar": "^4.0.2",
-    "tsx": "^4.20.3"
+    "tsx": "^4.20.3",
+    "varlock": "^1.9.0"
   },
   "prettier": {
     "semi": true,

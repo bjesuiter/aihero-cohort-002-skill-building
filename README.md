@@ -9,6 +9,7 @@ Repository for the [5-day cohort course](https://www.aihero.dev/cohorts/build-yo
 
 - [Node.js](https://nodejs.org/en/download) (version 22 or higher)
 - [pnpm](https://pnpm.io/) (recommended) or npm/yarn/bun
+- [Varlock](https://varlock.dev/) (installed by this repo)
 - AI SDK v5 knowledge (prerequisite)
 - API keys for AI providers:
   - [OpenAI](https://platform.openai.com/api-keys) (GPT-4, GPT-3.5)
@@ -33,10 +34,53 @@ pnpm install
 3. **Configure your environment:**
 
 ```bash
-cp .env.example .env
+pnpm env:check
 ```
 
-4. **Add your API keys to `.env`** and you're ready to start!
+4. **Use the local Varlock profile.**
+
+The committed `.env.jb` profile contains portable resolver refs for
+JB's local dev secrets imported with `varlock keychain import`. Each
+Keychain item uses service `varlock` and account
+`aihero-cohort-002-skill-building:jb:<ENV_VAR_NAME>`. When creating
+the Keychain item, add the repo path as a comment/label if your
+Keychain tool supports it:
+`/Users/bjesuiter/Develop/bjesuiter/aihero-cohort-002-skill-building`.
+If a Keychain access prompt appears, approve it for the scoped local
+dev item.
+
+The default local scripts set `DEV_ENV=jb` inline, so a fresh clone does
+not need a local `.env.local` selector for normal exercise commands.
+
+```dotenv
+# Local dev secret for GOOGLE_GENERATIVE_AI_API_KEY.
+# Project slug: aihero-cohort-002-skill-building.
+# Profile: jb.
+GOOGLE_GENERATIVE_AI_API_KEY=keychain(service="varlock", account="aihero-cohort-002-skill-building:jb:GOOGLE_GENERATIVE_AI_API_KEY")
+
+# Local dev secret for ANTHROPIC_API_KEY.
+# Project slug: aihero-cohort-002-skill-building.
+# Profile: jb.
+ANTHROPIC_API_KEY=keychain(service="varlock", account="aihero-cohort-002-skill-building:jb:ANTHROPIC_API_KEY")
+
+# Local dev secret for OPENAI_API_KEY.
+# Project slug: aihero-cohort-002-skill-building.
+# Profile: jb.
+OPENAI_API_KEY=keychain(service="varlock", account="aihero-cohort-002-skill-building:jb:OPENAI_API_KEY")
+
+# Local dev secret for OPENCODE_ZEN_API_KEY.
+# Project slug: aihero-cohort-002-skill-building.
+# Profile: jb.
+OPENCODE_ZEN_API_KEY=keychain(service="varlock", account="aihero-cohort-002-skill-building:jb:OPENCODE_ZEN_API_KEY")
+```
+
+For this course, configure at least one model provider key. Gemini is
+the default in most exercises.
+
+Then run `pnpm env:load` once to let Varlock resolve the `jb` profile's
+local Keychain entries. Production and CI should set the same exported
+env variable names directly in the platform secret manager; they should
+not depend on local macOS Keychain items.
 
 ## Course Structure
 
@@ -72,7 +116,9 @@ Start by running `pnpm dev`:
 pnpm dev
 ```
 
-This will allow you to choose between the different course sections.
+This runs the exercise launcher through
+`DEV_ENV=jb varlock run -- ...`, then allows you to choose between the
+different course sections.
 
 You can also run `pnpm exercise <exercise-number>` to jump to a specific exercise.
 

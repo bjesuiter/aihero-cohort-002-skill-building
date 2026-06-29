@@ -16,19 +16,33 @@ One thing I would urge you to be cautious about, though, is using local models. 
 
 ## Setting Up Your API Key
 
-Once you've got your API key, you need to stick it in `.env`—both in the skill building and in the project repos since they both use AI.
+Once you've got your API key, add it to your local Varlock config in both the skill building and project repos since they both use AI. The committed `.env.schema` files document the required variable names; real env files stay gitignored.
 
 ### For Gemini
 
 First, [get your Gemini API key](https://aistudio.google.com/api-keys).
 
-Then add it to your `.env` file:
+The committed `.env.jb` file contains the resolver ref for this local
+dev secret:
 
 ```
-GOOGLE_GENERATIVE_AI_API_KEY="your-api-key-here"
+GOOGLE_GENERATIVE_AI_API_KEY=keychain(service="varlock", account="aihero-cohort-002-skill-building:jb:GOOGLE_GENERATIVE_AI_API_KEY")
 ```
 
-Replace `your-api-key-here` with the actual API key you generated.
+Create the Keychain item with service `varlock`, account
+`aihero-cohort-002-skill-building:jb:GOOGLE_GENERATIVE_AI_API_KEY`,
+and add the repo path as a comment/label when your Keychain tool
+supports it:
+`/Users/bjesuiter/Develop/bjesuiter/aihero-cohort-002-skill-building`.
+Varlock's current Keychain resolver can look up by service and
+account, but it cannot set comment/label metadata or custom picker
+heading/title/supporting text from `.env.jb`. If the native picker
+heading only shows the exported env var name, use the selectable item's
+scoped service/account to confirm this is the local dev secret for this
+repo before selecting it.
+The default local scripts select the `jb` profile inline with
+`DEV_ENV=jb`, so no `.env.local` selector is needed. Run
+`pnpm env:load` to verify Varlock can resolve it.
 
 ### For Other Providers
 
@@ -36,13 +50,13 @@ If you're using a different provider like Anthropic or OpenAI:
 
 1. Check the [AI SDK providers documentation](https://ai-sdk.dev/providers/ai-sdk-providers) for your specific provider
 2. Install the required provider package from the AI SDK
-3. Add the appropriate environment variable to your `.env` file
+3. Use the matching resolver ref in `.env.jb` with the same `keychain(service="varlock", account="aihero-cohort-002-skill-building:jb:<ENV_VAR_NAME>")` pattern
 4. Do a find and replace with any of the Google models that I've used and replace it with your own
 
 ```
 google('gemini-2.5-flash') -> openai('gpt-4.1-mini')
 ```
 
-So once you have a `.env` file with an API key in, you are good to go.
+So once Varlock can resolve at least one model provider key, you are good to go.
 
 Nice work, and I will see you in the next one.
